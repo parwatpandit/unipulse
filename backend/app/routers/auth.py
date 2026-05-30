@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import SignupRequest, SignupResponse
-from passlib.context import CryptContext
+import bcrypt
 import resend
 import os
 import secrets
@@ -11,7 +11,7 @@ from datetime import date
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# removed pwd_context
 
 resend.api_key = os.getenv("RESEND_API_KEY")
 
@@ -45,7 +45,7 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
     if existing_student:
         raise HTTPException(status_code=400, detail="Student ID already registered")
     
-    password_hash = pwd_context.hash(data.password)
+    password_hash = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
     
     verification_token = secrets.token_urlsafe(32)
     
