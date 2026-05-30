@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import SignupRequest, SignupResponse, LoginRequest, LoginResponse, ForgotPasswordRequest, ResetPasswordRequest
+from app.schemas.user import SignupRequest, SignupResponse, LoginRequest, LoginResponse, ForgotPasswordRequest, ResetPasswordRequest, CompleteProfileRequest
 import bcrypt
 import resend
 import os
@@ -54,6 +54,7 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
     email=data.email,
     student_id=data.student_id,
     password_hash=password_hash,
+    dob=data.dob,
     is_verified=False,
     profile_completed=False,
     verification_token=verification_token

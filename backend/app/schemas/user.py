@@ -25,3 +25,12 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
+
+class CompleteProfileRequest(BaseModel):
+    full_name: str
+    course: str
+    course_start_year: int
+    country: str
+    sex: str
+    relationship_status: str
+    partner_profile_link: Optional[str] = None
