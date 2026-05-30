@@ -2,12 +2,13 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import SignupRequest, SignupResponse
+from app.schemas.user import SignupRequest, SignupResponse, LoginRequest, LoginResponse
 import bcrypt
 import resend
 import os
 import secrets
-from datetime import date
+from datetime import date, datetime, timedelta
+from jose import JWTError, jwt
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -50,22 +51,60 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
     verification_token = secrets.token_urlsafe(32)
     
     new_user = User(
-        email=data.email,
-        student_id=data.student_id,
-        password_hash=password_hash,
-        is_verified=False,
-        profile_completed=False
-    )
+    email=data.email,
+    student_id=data.student_id,
+    password_hash=password_hash,
+    is_verified=False,
+    profile_completed=False,
+    verification_token=verification_token
+)
     
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     
-    resend.Emails.send({
-        "from": "onboarding@resend.dev",
-        "to": data.email,
-        "subject": "Verify your Unipulse account",
-        "html": f"<p>Click the link below to verify your Unipulse account:</p><a href='http://localhost:8000/auth/verify?token={verification_token}'>Verify Email</a>"
-    })
+    # resend.Emails.send({
+    #     "from": "noreply@unipulse.xyz",
+    #     "to": data.email,
+    #     "subject": "Verify your Unipulse account",
+    #     "html": f"<p>Click the link below to verify your Unipulse account:</p><a href='http://localhost:8000/auth/verify?token={verification_token}'>Verify Email</a>"
+    # })
     
     return {"message": "Account created. Please check your email to verify your account."}
+
+@router.get("/verify")
+def verify_email(token: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.verification_token == token).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification link")
+    
+    if user.is_verified:
+        raise HTTPException(status_code=400, detail="Email already verified")
+    
+    user.is_verified = True
+    user.verification_token = None
+    db.commit()
+    
+    return {"message": "Email verified successfully. You can now log in."}
+
+@router.post("/login", response_model=LoginResponse)
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+    
+    if not bcrypt.checkpw(data.password.encode("utf-8"), user.password_hash.encode("utf-8")):
+        raise HTTPException(status_code=400, detail="Invalid email or password")
+    
+    if not user.is_verified:
+        raise HTTPException(status_code=400, detail="Please verify your email before logging in")
+    
+    access_token = jwt.encode(
+        {"sub": str(user.id), "exp": datetime.utcnow() + timedelta(minutes=1440)},
+        os.getenv("SECRET_KEY"),
+        algorithm=os.getenv("ALGORITHM")
+    )
+    
+    return {"access_token": access_token, "token_type": "bearer"}

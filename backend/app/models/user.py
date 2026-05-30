@@ -21,3 +21,4 @@ class User(Base):
     profile_picture_url = Column(String)
     is_verified = Column(Boolean, default=False)
     profile_completed = Column(Boolean, default=False)
+    verification_token = Column(String)
