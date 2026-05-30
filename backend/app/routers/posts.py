@@ -52,3 +52,8 @@ def create_post(
 def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     posts = db.query(Post).order_by(Post.created_at.desc()).all()
     return posts
+
+@router.get("/user/{user_id}", response_model=list[CreatePostResponse])
+def get_posts_by_user(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    posts = db.query(Post).filter(Post.user_id == user_id).order_by(Post.created_at.desc()).all()
+    return posts
