@@ -22,3 +22,4 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     profile_completed = Column(Boolean, default=False)
     verification_token = Column(String)
+    reset_token = Column(String)
