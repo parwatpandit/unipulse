@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import SignupRequest, SignupResponse, LoginRequest, LoginResponse
+from app.schemas.user import SignupRequest, SignupResponse, LoginRequest, LoginResponse, ForgotPasswordRequest, ResetPasswordRequest
 import bcrypt
 import resend
 import os
@@ -108,3 +108,37 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     )
     
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+    
+    if not user:
+        return {"message": "If that email is registered you will receive a reset link shortly"}
+    
+    reset_token = secrets.token_urlsafe(32)
+    user.reset_token = reset_token
+    db.commit()
+    
+    # resend.Emails.send({
+    #     "from": "noreply@unipulse.xyz",
+    #     "to": data.email,
+    #     "subject": "Reset your Unipulse password",
+    #     "html": f"<p>Click the link below to reset your password:</p><a href='http://localhost:8000/auth/reset-password?token={reset_token}'>Reset Password</a>"
+    # })
+    
+    return {"message": "If that email is registered you will receive a reset link shortly"}
+
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.reset_token == data.token).first()
+    
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link")
+    
+    user.password_hash = bcrypt.hashpw(data.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    user.reset_token = None
+    db.commit()
+    
+    return {"message": "Password reset successfully. You can now log in."}
