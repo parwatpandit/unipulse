@@ -5,6 +5,7 @@ from app.routers import auth, users, posts
 from app.routers import friends
 from app.routers import search
 from app.routers import notifications
+from app.routers import live_status
 
 load_dotenv()
 
@@ -24,6 +25,7 @@ app.include_router(posts.router)
 app.include_router(friends.router)
 app.include_router(search.router)
 app.include_router(notifications.router)
+app.include_router(live_status.router)
 
 @app.get("/")
 def root():
