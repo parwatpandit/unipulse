@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from app.routers import auth, users, posts
 from app.routers import friends
 from app.routers import search
+from app.routers import notifications
 
 load_dotenv()
 
@@ -22,6 +23,7 @@ app.include_router(users.router)
 app.include_router(posts.router)
 app.include_router(friends.router)
 app.include_router(search.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 def root():

@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
 from app.database import Base
+from app.routers.notifications import Notification
 
 class Friend(Base):
     __tablename__ = "friends"
@@ -36,6 +37,13 @@ def send_friend_request(user_id: str, db: Session = Depends(get_db), current_use
     friend_request = Friend(user_id=current_user.id, friend_id=user_id, status="pending")
     db.add(friend_request)
     db.commit()
+    notification = Notification(
+    user_id=uuid.UUID(user_id),
+    from_user_id=current_user.id,
+    type="friend_request"
+)
+    db.add(notification)
+    db.commit()
     return {"message": "Friend request sent"}
 
 @router.post("/accept/{request_id}")
@@ -46,6 +54,13 @@ def accept_friend_request(request_id: str, db: Session = Depends(get_db), curren
     if friend_request.status != "pending":
         raise HTTPException(status_code=400, detail="Friend request already processed")
     friend_request.status = "accepted"
+    db.commit()
+    notification = Notification(
+    user_id=friend_request.user_id,
+    from_user_id=current_user.id,
+    type="friend_request_accepted"
+)
+    db.add(notification)
     db.commit()
     return {"message": "Friend request accepted"}
 
