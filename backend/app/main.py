@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.routers import auth, users, posts
 from app.routers import friends
+from app.routers import search
 
 load_dotenv()
 
@@ -20,6 +21,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(posts.router)
 app.include_router(friends.router)
+app.include_router(search.router)
 
 @app.get("/")
 def root():
