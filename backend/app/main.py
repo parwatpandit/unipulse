@@ -6,6 +6,8 @@ from app.routers import friends
 from app.routers import search
 from app.routers import notifications
 from app.routers import live_status
+from app.routers.chat import sio
+import socketio
 
 load_dotenv()
 
@@ -30,3 +32,6 @@ app.include_router(live_status.router)
 @app.get("/")
 def root():
     return {"message": "Unipulse API is running"}
+
+# Mount Socket.io
+socket_app = socketio.ASGIApp(sio, app)

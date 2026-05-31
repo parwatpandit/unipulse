@@ -4,6 +4,8 @@ from app.database import get_db
 from app.models.user import User
 from jose import JWTError, jwt
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 def get_current_user(authorization: str = Header(...), db: Session = Depends(get_db)):
     try:
@@ -20,3 +22,14 @@ def get_current_user(authorization: str = Header(...), db: Session = Depends(get
         raise HTTPException(status_code=401, detail="User not found")
     
     return user
+
+def verify_token(token: str):
+    try:
+        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
+        user_id: str = payload.get("sub")
+        email: str = payload.get("email")
+        if user_id is None:
+            return None
+        return {"user_id": user_id, "email": email}
+    except JWTError:
+        return None
