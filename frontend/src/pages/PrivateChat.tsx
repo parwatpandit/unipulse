@@ -19,6 +19,7 @@ function PrivateChat() {
   const [otherName, setOtherName] = useState('')
   const socketRef = useRef<Socket | null>(null)
   const [myId, setMyId] = useState('')
+  const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const token = getToken()
@@ -49,6 +50,10 @@ function PrivateChat() {
       socket.disconnect()
     }
   }, [id])
+
+  useEffect(() => {
+  bottomRef.current?.scrollIntoView()
+}, [messages])
 
   const fetchOtherUser = async () => {
     try {
@@ -104,6 +109,7 @@ function PrivateChat() {
             <p className="text-sm">{msg.message}</p>
           </div>
         ))}
+        <div ref={bottomRef} />
       </div>
 
       <div className="fixed bottom-12 left-0 right-0 border-t bg-white px-4 py-2 flex gap-2">
