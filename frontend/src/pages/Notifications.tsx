@@ -3,9 +3,9 @@ import { useNavigate, Link } from 'react-router-dom'
 import api from '../utils/api'
 
 interface Notification {
-  id: number
+  id: string
   type: string
-  from_user_id: number
+  from_user_id: string
   from_user_name: string
   is_read: boolean
   created_at: string
@@ -28,12 +28,32 @@ function Notifications() {
     }
   }
 
-  const markRead = async (id: number) => {
+  const markRead = async (id: string) => {
     try {
       await api.post(`/notifications/read/${id}`)
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       )
+    } catch {}
+  }
+
+  const handleAccept = async (notificationId: string, fromUserId: string) => {
+    try {
+      const res = await api.get(`/friends/status/${fromUserId}`)
+      const requestId = res.data.request_id
+      await api.post(`/friends/accept/${requestId}`)
+      markRead(notificationId)
+      fetchNotifications()
+    } catch {}
+  }
+
+  const handleDecline = async (notificationId: string, fromUserId: string) => {
+    try {
+      const res = await api.get(`/friends/status/${fromUserId}`)
+      const requestId = res.data.request_id
+      await api.post(`/friends/decline/${requestId}`)
+      markRead(notificationId)
+      fetchNotifications()
     } catch {}
   }
 
@@ -46,7 +66,6 @@ function Notifications() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Top Nav */}
       <div className="border-b px-6 py-3 flex items-center justify-between">
         <span className="text-xl font-bold">UniPulse</span>
         <input
@@ -69,16 +88,34 @@ function Notifications() {
         {notifications.map((n) => (
           <div
             key={n.id}
-            className={`border p-3 mb-3 cursor-pointer ${!n.is_read ? 'bg-gray-50' : ''}`}
-            onClick={() => markRead(n.id)}
+            className={`border p-3 mb-3 ${!n.is_read ? 'bg-gray-50' : ''}`}
           >
             <p className="text-sm">{getMessage(n.type, n.from_user_name)}</p>
-            {!n.is_read && <p className="text-xs text-gray-400 mt-1">Click to mark as read</p>}
+            {n.type === 'friend_request' && (
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => handleAccept(n.id, n.from_user_id)}
+                  className="bg-black text-white px-3 py-1 text-xs"
+                >
+                  Accept
+                </button>
+                <button
+                  onClick={() => handleDecline(n.id, n.from_user_id)}
+                  className="border px-3 py-1 text-xs"
+                >
+                  Decline
+                </button>
+              </div>
+            )}
+            {!n.is_read && n.type !== 'friend_request' && (
+              <p className="text-xs text-gray-400 mt-1 cursor-pointer" onClick={() => markRead(n.id)}>
+                Click to mark as read
+              </p>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Bottom Nav */}
       <div className="fixed bottom-0 left-0 right-0 border-t bg-white flex justify-around py-3 text-sm">
         <Link to="/home">Home</Link>
         <Link to="/global-chat">Chat</Link>

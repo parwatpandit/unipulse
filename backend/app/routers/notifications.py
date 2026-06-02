@@ -27,16 +27,18 @@ def get_notifications(db: Session = Depends(get_db), current_user: User = Depend
         Notification.user_id == current_user.id
     ).order_by(Notification.created_at.desc()).all()
 
-    return [
-        {
+    result = []
+    for n in notifications:
+        from_user = db.query(User).filter(User.id == n.from_user_id).first()
+        result.append({
             "id": str(n.id),
             "from_user_id": str(n.from_user_id),
+            "from_user_name": from_user.full_name if from_user else "Unknown",
             "type": n.type,
             "is_read": n.is_read,
             "created_at": n.created_at
-        }
-        for n in notifications
-    ]
+        })
+    return result
 
 @router.post("/read/{notification_id}")
 def mark_as_read(notification_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
