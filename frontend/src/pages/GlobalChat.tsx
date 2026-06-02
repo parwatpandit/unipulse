@@ -1,15 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { io, Socket } from 'socket.io-client'
-import api from '../utils/api'
 import { getToken } from '../utils/auth'
 
 interface Message {
-  id: number
-  user_id: number
-  full_name: string
-  text: string
-  created_at: string
+  user_id: string
+  email: string
+  message: string
 }
 
 function GlobalChat() {
@@ -17,15 +14,23 @@ function GlobalChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const socketRef = useRef<Socket | null>(null)
-  const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    fetchMessages()
+    const token = getToken()
+    if (!token) return navigate('/login')
 
     const socket = io('http://localhost:8000', {
-      auth: { token: getToken() }
+      auth: { token }
     })
     socketRef.current = socket
+
+    socket.on('connect', () => {
+      socket.emit('get_global_history')
+    })
+
+    socket.on('global_history', (history: Message[]) => {
+      setMessages(history)
+    })
 
     socket.on('global_message', (msg: Message) => {
       setMessages((prev) => [...prev, msg])
@@ -36,22 +41,9 @@ function GlobalChat() {
     }
   }, [])
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView()
-  }, [messages])
-
-  const fetchMessages = async () => {
-    try {
-      const res = await api.get('/chat/global')
-      setMessages(res.data)
-    } catch {
-      navigate('/login')
-    }
-  }
-
   const handleSend = () => {
     if (!text.trim()) return
-    socketRef.current?.emit('global_message', { text })
+    socketRef.current?.emit('send_global_message', { message: text })
     setText('')
   }
 
@@ -73,18 +65,15 @@ function GlobalChat() {
         <Link to="/notifications" className="text-sm">🔔</Link>
       </div>
 
-      <div className="max-w-2xl mx-auto w-full px-4 py-4 flex-1 overflow-y-auto pb-32">
+      <div className="max-w-2xl mx-auto w-full px-4 py-4 flex-1 pb-32">
         <h1 className="text-xl font-bold mb-4">Global Chat</h1>
 
-        {messages.map((msg) => (
-          <div key={msg.id} className="border p-3 mb-2">
-            <p className="text-xs text-gray-500 mb-1">
-              <Link to={`/profile/${msg.user_id}`} className="underline">{msg.full_name}</Link>
-            </p>
-            <p className="text-sm">{msg.text}</p>
+        {messages.map((msg, i) => (
+          <div key={i} className="border p-3 mb-2">
+            <p className="text-xs text-gray-500 mb-1">{msg.email}</p>
+            <p className="text-sm">{msg.message}</p>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       <div className="fixed bottom-12 left-0 right-0 border-t bg-white px-4 py-2 flex gap-2">

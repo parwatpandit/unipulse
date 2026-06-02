@@ -84,3 +84,16 @@ def get_user(user_id: str, db: Session = Depends(get_db), current_user: User = D
         "profile_picture_url": user.profile_picture_url,
         "friend_count": friend_count,
     }
+
+@router.put("/me")
+def update_profile(data: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if "full_name" in data:
+        current_user.full_name = data["full_name"]
+    if "course" in data:
+        current_user.course = data["course"]
+    if "country" in data:
+        current_user.country = data["country"]
+    if "relationship_status" in data:
+        current_user.relationship_status = data["relationship_status"]
+    db.commit()
+    return {"message": "Profile updated"}

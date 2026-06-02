@@ -9,6 +9,7 @@ import os
 import secrets
 from datetime import date, datetime, timedelta
 from jose import JWTError, jwt
+from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -143,3 +144,11 @@ def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
     db.commit()
     
     return {"message": "Password reset successfully. You can now log in."}
+
+@router.post("/change-password")
+def change_password(data: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if not bcrypt.checkpw(data["old_password"].encode("utf-8"), current_user.password_hash.encode("utf-8")):
+        raise HTTPException(status_code=400, detail="Old password is incorrect")
+    current_user.password_hash = bcrypt.hashpw(data["new_password"].encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    db.commit()
+    return {"message": "Password changed successfully"}

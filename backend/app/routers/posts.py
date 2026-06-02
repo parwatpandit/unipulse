@@ -46,7 +46,16 @@ def create_post(
     db.commit()
     db.refresh(new_post)
 
-    return new_post
+    return {
+        "id": new_post.id,
+        "user_id": new_post.user_id,
+        "text_content": new_post.text_content,
+        "image_url": new_post.image_url,
+        "created_at": new_post.created_at,
+        "full_name": current_user.full_name,
+        "course": current_user.course,
+        "profile_picture_url": current_user.profile_picture_url,
+    }
 
 @router.get("/", response_model=list[CreatePostResponse])
 def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

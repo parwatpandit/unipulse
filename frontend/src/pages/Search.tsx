@@ -19,7 +19,7 @@ function Search() {
     setQuery(val)
     if (!val.trim()) return setResults([])
     try {
-      const res = await api.get(`/search?q=${val}`)
+      const res = await api.get(`/search?query=${val}`)
       setResults(res.data)
     } catch {}
   }

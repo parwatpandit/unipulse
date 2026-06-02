@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { io, Socket } from 'socket.io-client'
-import api from '../utils/api'
 import { getToken } from '../utils/auth'
+import api from '../utils/api'
 
 interface Message {
-  id: number
-  sender_id: number
-  text: string
+  sender_id: string
+  receiver_id: string
+  message: string
   created_at: string
 }
 
@@ -18,40 +18,37 @@ function PrivateChat() {
   const [text, setText] = useState('')
   const [otherName, setOtherName] = useState('')
   const socketRef = useRef<Socket | null>(null)
-  const bottomRef = useRef<HTMLDivElement | null>(null)
+  const [myId, setMyId] = useState('')
 
   useEffect(() => {
-    fetchMessages()
+    const token = getToken()
+    if (!token) return navigate('/login')
+
     fetchOtherUser()
+    fetchMyId()
 
     const socket = io('http://localhost:8000', {
-      auth: { token: getToken() }
+      auth: { token }
     })
     socketRef.current = socket
 
+    socket.on('connect', () => {
+      socket.emit('join_private_room', { other_user_id: id })
+      socket.emit('get_private_history', { other_user_id: id })
+    })
+
+    socket.on('private_history', (history: Message[]) => {
+      setMessages(history)
+    })
+
     socket.on('private_message', (msg: Message) => {
-      if (String(msg.sender_id) === String(id)) {
-        setMessages((prev) => [...prev, msg])
-      }
+      setMessages((prev) => [...prev, msg])
     })
 
     return () => {
       socket.disconnect()
     }
   }, [id])
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView()
-  }, [messages])
-
-  const fetchMessages = async () => {
-    try {
-      const res = await api.get(`/chat/private/${id}`)
-      setMessages(res.data)
-    } catch {
-      navigate('/login')
-    }
-  }
 
   const fetchOtherUser = async () => {
     try {
@@ -60,9 +57,16 @@ function PrivateChat() {
     } catch {}
   }
 
+  const fetchMyId = async () => {
+    try {
+      const res = await api.get('/users/me')
+      setMyId(String(res.data.id))
+    } catch {}
+  }
+
   const handleSend = () => {
     if (!text.trim()) return
-    socketRef.current?.emit('private_message', { to_user_id: id, text })
+    socketRef.current?.emit('send_private_message', { receiver_id: id, message: text })
     setText('')
   }
 
@@ -84,23 +88,22 @@ function PrivateChat() {
         <Link to="/notifications" className="text-sm">🔔</Link>
       </div>
 
-      <div className="max-w-2xl mx-auto w-full px-4 py-4 flex-1 overflow-y-auto pb-32">
+      <div className="max-w-2xl mx-auto w-full px-4 py-4 flex-1 pb-32">
         <div className="flex items-center gap-2 mb-4">
           <button onClick={() => navigate('/messages')} className="text-sm underline">← Back</button>
           <h1 className="text-xl font-bold">{otherName}</h1>
         </div>
 
-        {messages.map((msg) => (
+        {messages.map((msg, i) => (
           <div
-            key={msg.id}
+            key={i}
             className={`border p-3 mb-2 max-w-xs ${
-              String(msg.sender_id) !== String(id) ? 'ml-auto' : ''
+              msg.sender_id === myId ? 'ml-auto' : ''
             }`}
           >
-            <p className="text-sm">{msg.text}</p>
+            <p className="text-sm">{msg.message}</p>
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       <div className="fixed bottom-12 left-0 right-0 border-t bg-white px-4 py-2 flex gap-2">

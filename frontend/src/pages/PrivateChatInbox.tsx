@@ -7,7 +7,7 @@ interface Conversation {
   full_name: string
   profile_picture_url: string | null
   last_message: string
-  last_message_at: string
+  created_at: string
 }
 
 function PrivateChatInbox() {
