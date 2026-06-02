@@ -37,6 +37,13 @@ function Notifications() {
     } catch {}
   }
 
+  const deleteNotification = async (id: string) => {
+    try {
+      await api.delete(`/notifications/${id}`)
+      setNotifications((prev) => prev.filter((n) => n.id !== id))
+    } catch {}
+  }
+
   const handleAccept = async (notificationId: string, fromUserId: string) => {
     try {
       const res = await api.get(`/friends/status/${fromUserId}`)
@@ -88,8 +95,14 @@ function Notifications() {
         {notifications.map((n) => (
           <div
             key={n.id}
-            className={`border p-3 mb-3 ${!n.is_read ? 'bg-gray-50' : ''}`}
+            className={`border p-3 mb-3 relative ${!n.is_read ? 'bg-gray-50' : ''}`}
           >
+            <button
+              onClick={() => deleteNotification(n.id)}
+              className="absolute top-2 right-2 text-gray-400 text-xs"
+            >
+              ✕
+            </button>
             <p className="text-sm">{getMessage(n.type, n.from_user_name)}</p>
             {n.type === 'friend_request' && (
               <div className="flex gap-2 mt-2">

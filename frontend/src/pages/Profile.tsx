@@ -114,7 +114,15 @@ function Profile() {
             <p className="text-sm text-gray-500">Friend request sent</p>
           )}
           {friendStatus === 'accepted' && (
-            <p className="text-sm text-gray-500">Friends</p>
+            <div className="flex gap-3 items-center">
+              <p className="text-sm text-gray-500">Friends</p>
+              <button
+                onClick={() => navigate(`/messages/${id}`)}
+                className="bg-black text-white px-4 py-1 text-sm"
+              >
+                Message
+              </button>
+            </div>
           )}
         </div>
 
