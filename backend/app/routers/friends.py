@@ -82,3 +82,13 @@ def get_friend_count(db: Session = Depends(get_db), current_user: User = Depends
         (Friend.user_id == current_user.id) | (Friend.friend_id == current_user.id)
     ).count()
     return {"friend_count": count}
+
+@router.get("/status/{user_id}")
+def get_friend_status(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    friend = db.query(Friend).filter(
+        ((Friend.user_id == current_user.id) & (Friend.friend_id == user_id)) |
+        ((Friend.user_id == user_id) & (Friend.friend_id == current_user.id))
+    ).first()
+    if not friend:
+        return {"status": ""}
+    return {"status": friend.status}

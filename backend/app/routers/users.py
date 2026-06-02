@@ -47,3 +47,40 @@ def upload_profile_picture(
     current_user.profile_picture_url = image_url
     db.commit()
     return {"message": "Profile picture updated successfully", "profile_picture_url": image_url}
+
+@router.get("/me")
+def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "course": current_user.course,
+        "course_start_year": current_user.course_start_year,
+        "country": current_user.country,
+        "sex": current_user.sex,
+        "relationship_status": current_user.relationship_status,
+        "profile_picture_url": current_user.profile_picture_url,
+        "profile_completed": current_user.profile_completed,
+    }
+
+@router.get("/{user_id}")
+def get_user(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    from app.routers.friends import Friend
+    friend_count = db.query(Friend).filter(
+        Friend.status == "accepted",
+        (Friend.user_id == user_id) | (Friend.friend_id == user_id)
+    ).count()
+    return {
+        "id": user.id,
+        "full_name": user.full_name,
+        "course": user.course,
+        "course_start_year": user.course_start_year,
+        "country": user.country,
+        "sex": user.sex,
+        "relationship_status": user.relationship_status,
+        "profile_picture_url": user.profile_picture_url,
+        "friend_count": friend_count,
+    }

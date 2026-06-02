@@ -50,10 +50,34 @@ def create_post(
 
 @router.get("/", response_model=list[CreatePostResponse])
 def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    posts = db.query(Post).order_by(Post.created_at.desc()).all()
-    return posts
+    posts = db.query(Post, User).join(User, Post.user_id == User.id).order_by(Post.created_at.desc()).all()
+    result = []
+    for post, user in posts:
+        result.append({
+            "id": post.id,
+            "user_id": post.user_id,
+            "text_content": post.text_content,
+            "image_url": post.image_url,
+            "created_at": post.created_at,
+            "full_name": user.full_name,
+            "course": user.course,
+            "profile_picture_url": user.profile_picture_url,
+        })
+    return result
 
 @router.get("/user/{user_id}", response_model=list[CreatePostResponse])
 def get_posts_by_user(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    posts = db.query(Post).filter(Post.user_id == user_id).order_by(Post.created_at.desc()).all()
-    return posts
+    posts = db.query(Post, User).join(User, Post.user_id == User.id).filter(Post.user_id == user_id).order_by(Post.created_at.desc()).all()
+    result = []
+    for post, user in posts:
+        result.append({
+            "id": post.id,
+            "user_id": post.user_id,
+            "text_content": post.text_content,
+            "image_url": post.image_url,
+            "created_at": post.created_at,
+            "full_name": user.full_name,
+            "course": user.course,
+            "profile_picture_url": user.profile_picture_url,
+        })
+    return result
