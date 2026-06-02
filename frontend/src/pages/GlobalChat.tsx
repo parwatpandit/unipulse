@@ -1,0 +1,1 @@
+export default function GlobalChat() { return <div>Global Chat</div> }

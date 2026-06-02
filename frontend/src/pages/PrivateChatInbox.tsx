@@ -1,0 +1,1 @@
+export default function PrivateChatInbox() { return <div>Private Chat Inbox</div> }
