@@ -64,12 +64,12 @@ def signup(data: SignupRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     
-    # resend.Emails.send({
-    #     "from": "noreply@unipulse.xyz",
-    #     "to": data.email,
-    #     "subject": "Verify your Unipulse account",
-    #     "html": f"<p>Click the link below to verify your Unipulse account:</p><a href='http://localhost:8000/auth/verify?token={verification_token}'>Verify Email</a>"
-    # })
+    resend.Emails.send({
+        "from": "noreply@unipulse.xyz",
+        "to": data.email,
+        "subject": "Verify your Unipulse account",
+        "html": f"<p>Click the link below to verify your Unipulse account:</p><a href='http://localhost:8000/auth/verify?token={verification_token}'>Verify Email</a>"
+    })
     
     return {"message": "Account created. Please check your email to verify your account."}
 
@@ -121,12 +121,12 @@ def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     user.reset_token = reset_token
     db.commit()
     
-    # resend.Emails.send({
-    #     "from": "noreply@unipulse.xyz",
-    #     "to": data.email,
-    #     "subject": "Reset your Unipulse password",
-    #     "html": f"<p>Click the link below to reset your password:</p><a href='http://localhost:8000/auth/reset-password?token={reset_token}'>Reset Password</a>"
-    # })
+    resend.Emails.send({
+        "from": "noreply@unipulse.xyz",
+        "to": data.email,
+        "subject": "Reset your Unipulse password",
+        "html": f"<p>Click the link below to reset your password:</p><a href='http://localhost:8000/auth/reset-password?token={reset_token}'>Reset Password</a>"
+    })
     
     return {"message": "If that email is registered you will receive a reset link shortly"}
 
