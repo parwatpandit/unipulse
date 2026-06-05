@@ -19,6 +19,7 @@ function PrivateChat() {
   const [otherName, setOtherName] = useState('')
   const socketRef = useRef<Socket | null>(null)
   const [myId, setMyId] = useState('')
+  const [profile, setProfile] = useState<{ profile_picture_url: string | null } | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -56,11 +57,12 @@ function PrivateChat() {
 }, [messages])
 
   const fetchOtherUser = async () => {
-    try {
-      const res = await api.get(`/users/${id}`)
-      setOtherName(res.data.full_name)
-    } catch {}
-  }
+  try {
+    const res = await api.get(`/users/${id}`)
+    setOtherName(res.data.full_name)
+    setProfile(res.data)
+  } catch {}
+}
 
   const fetchMyId = async () => {
     try {
@@ -94,19 +96,30 @@ function PrivateChat() {
         <Link to="/notifications" className="text-sm">🔔</Link>
       </div>
 
-      <div className="max-w-2xl mx-auto w-full px-4 py-4 flex-1 pb-32 pt-20">        <div className="flex items-center gap-2 mb-4">
-          <button onClick={() => navigate('/messages')} className="text-sm underline">← Back</button>
-          <h1 className="text-xl font-bold">{otherName}</h1>
-        </div>
+      <div className="fixed top-14 left-0 right-0 px-4 py-2 z-40 pointer-events-none">
+  <div className="flex items-center gap-3 mb-1 pointer-events-auto">
+    <div className="w-9 h-9 bg-gray-200 rounded-full overflow-hidden shadow">
+      {profile?.profile_picture_url && (
+        <img src={profile.profile_picture_url} alt="" className="w-full h-full object-cover" />
+      )}
+    </div>
+    <h1 className="text-base font-bold drop-shadow">{otherName}</h1>
+  </div>
+  <button onClick={() => navigate('/messages')} className="text-xs text-gray-500 underline pointer-events-auto drop-shadow">← Back</button>
+</div>
+<div className="max-w-2xl mx-auto w-full px-4 py-4 flex-1 pb-32 pt-36">
 
         {messages.map((msg, i) => (
           <div
-            key={i}
-            className={`border p-3 mb-2 max-w-xs ${
-              msg.sender_id === myId ? 'ml-auto' : ''
-            }`}
-          >
+  key={i}
+  className={`border p-3 mb-2 max-w-xs ${
+    msg.sender_id === myId ? 'ml-auto mr-2' : 'ml-2'
+  }`}
+>
             <p className="text-sm">{msg.message}</p>
+<p className="text-xs text-gray-400 mt-1">
+  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+</p>
           </div>
         ))}
         <div ref={bottomRef} />
