@@ -28,23 +28,13 @@ function Home() {
   }, [])
 
   const fetchPosts = async () => {
-    try {
-      const res = await api.get('/posts')
-      const postsWithLikes = await Promise.all(
-        res.data.map(async (post: any) => {
-          try {
-            const likeRes = await api.get(`/likes/${post.id}`)
-            return { ...post, like_count: likeRes.data.count, liked: likeRes.data.liked }
-          } catch {
-            return { ...post, like_count: 0, liked: false }
-          }
-        })
-      )
-      setPosts(postsWithLikes)
-    } catch {
-      navigate('/login')
-    }
+  try {
+    const res = await api.get('/posts')
+    setPosts(res.data)
+  } catch {
+    navigate('/login')
   }
+}
 
   // const handlePost = async () => {
   //   if (!text.trim()) return

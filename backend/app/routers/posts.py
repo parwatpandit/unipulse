@@ -8,6 +8,8 @@ from app.models.user import User
 import os
 import uuid
 from supabase import create_client
+from sqlalchemy import func, exists, and_
+from app.routers.likes import Like
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -60,8 +62,25 @@ def create_post(
 @router.get("/", response_model=list[CreatePostResponse])
 def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     posts = db.query(Post, User).join(User, Post.user_id == User.id).order_by(Post.created_at.desc()).all()
+    
+    post_ids = [str(post.id) for post, user in posts]
+    
+    like_counts = dict(
+        db.query(Like.post_id, func.count(Like.id))
+        .filter(Like.post_id.in_(post_ids))
+        .group_by(Like.post_id)
+        .all()
+    )
+    
+    liked_posts = set(
+        row[0] for row in db.query(Like.post_id)
+        .filter(Like.post_id.in_(post_ids), Like.user_id == str(current_user.id))
+        .all()
+    )
+    
     result = []
     for post, user in posts:
+        pid = str(post.id)
         result.append({
             "id": post.id,
             "user_id": post.user_id,
@@ -71,14 +90,33 @@ def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(ge
             "full_name": user.full_name,
             "course": user.course,
             "profile_picture_url": user.profile_picture_url,
+            "like_count": like_counts.get(pid, 0),
+            "liked": pid in liked_posts,
         })
     return result
 
 @router.get("/user/{user_id}", response_model=list[CreatePostResponse])
 def get_posts_by_user(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     posts = db.query(Post, User).join(User, Post.user_id == User.id).filter(Post.user_id == user_id).order_by(Post.created_at.desc()).all()
+
+    post_ids = [str(post.id) for post, user in posts]
+
+    like_counts = dict(
+        db.query(Like.post_id, func.count(Like.id))
+        .filter(Like.post_id.in_(post_ids))
+        .group_by(Like.post_id)
+        .all()
+    ) if post_ids else {}
+
+    liked_posts = set(
+        row[0] for row in db.query(Like.post_id)
+        .filter(Like.post_id.in_(post_ids), Like.user_id == str(current_user.id))
+        .all()
+    ) if post_ids else set()
+
     result = []
     for post, user in posts:
+        pid = str(post.id)
         result.append({
             "id": post.id,
             "user_id": post.user_id,
@@ -88,6 +126,8 @@ def get_posts_by_user(user_id: str, db: Session = Depends(get_db), current_user:
             "full_name": user.full_name,
             "course": user.course,
             "profile_picture_url": user.profile_picture_url,
+            "like_count": like_counts.get(pid, 0),
+            "liked": pid in liked_posts,
         })
     return result
 

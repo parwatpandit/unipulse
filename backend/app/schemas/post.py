@@ -12,6 +12,8 @@ class CreatePostResponse(BaseModel):
     full_name: Optional[str]
     course: Optional[str]
     profile_picture_url: Optional[str]
+    like_count: Optional[int] = 0
+    liked: Optional[bool] = False
 
     class Config:
         from_attributes = True

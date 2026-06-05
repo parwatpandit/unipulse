@@ -63,21 +63,11 @@ function Profile() {
   }
 
   const fetchPosts = async () => {
-    try {
-      const res = await api.get(`/posts/user/${id}`)
-      const postsWithLikes = await Promise.all(
-        res.data.map(async (post: any) => {
-          try {
-            const likeRes = await api.get(`/likes/${post.id}`)
-            return { ...post, like_count: likeRes.data.count, liked: likeRes.data.liked }
-          } catch {
-            return { ...post, like_count: 0, liked: false }
-          }
-        })
-      )
-      setPosts(postsWithLikes)
-    } catch {}
-  }
+  try {
+    const res = await api.get(`/posts/user/${id}`)
+    setPosts(res.data)
+  } catch {}
+}
 
   const handleAddFriend = async () => {
     try {
