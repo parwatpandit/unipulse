@@ -27,7 +27,7 @@ function Search() {
   return (
     <div className="min-h-screen bg-white">
       {/* Top Nav */}
-      <div className="border-b px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
+      <div className="border-b px-6 py-3 flex items-center justify-between fixed top-0 left-0 right-0 bg-white z-50">
         <span className="text-xl font-bold cursor-pointer" onClick={() => { window.location.href = '/home' }}>UniPulse</span>
         <input
           type="text"
@@ -40,7 +40,7 @@ function Search() {
         <Link to="/notifications" className="text-sm">🔔</Link>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 pt-20">
         {results.map((user) => (
           <div
             key={user.id}

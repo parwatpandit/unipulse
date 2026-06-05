@@ -26,11 +26,11 @@ if (!res.data.profile_completed) {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="border-b px-6 py-4 sticky top-0 bg-white z-50">
+      <div className="border-b px-6 py-4 fixed top-0 left-0 right-0 bg-white z-50">
         <span className="text-2xl font-bold cursor-pointer" onClick={() => { window.location.href = '/' }}>UniPulse</span>
       </div>
 
-      <div className="max-w-sm mx-auto px-6 py-16">
+      <div className="max-w-sm mx-auto px-6 py-16 pt-20">
         <h1 className="text-2xl font-bold mb-6">Log In</h1>
 
         {error && <p className="text-red-600 mb-4">{error}</p>}

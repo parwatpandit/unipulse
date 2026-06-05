@@ -123,7 +123,7 @@ function Settings() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="border-b px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
+      <div className="border-b px-6 py-3 flex items-center justify-between fixed top-0 left-0 right-0 bg-white z-50">
         <span className="text-xl font-bold cursor-pointer" onClick={() => { window.location.href = '/home' }}>UniPulse</span>
         <input
           type="text"
@@ -135,7 +135,7 @@ function Settings() {
         <Link to="/notifications" className="text-sm">🔔</Link>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 pb-20">
+      <div className="max-w-2xl mx-auto px-4 py-6 pb-20 pt-20">
         <h1 className="text-xl font-bold mb-4">Settings</h1>
 <button
   onClick={() => navigate(`/profile/${getCurrentUserId()}`)}
