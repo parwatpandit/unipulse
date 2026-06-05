@@ -109,7 +109,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         algorithm=os.getenv("ALGORITHM")
     )
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "profile_completed": user.profile_completed}
 
 @router.post("/forgot-password")
 def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):

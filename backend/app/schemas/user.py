@@ -18,7 +18,8 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     access_token: str
     token_type: str
-
+    profile_completed: bool
+    
 class ForgotPasswordRequest(BaseModel):
     email: str
 

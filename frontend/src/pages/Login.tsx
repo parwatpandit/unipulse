@@ -14,7 +14,11 @@ function Login() {
     try {
       const res = await api.post('/auth/login', { email, password })
       setToken(res.data.access_token)
-      navigate('/home')
+if (!res.data.profile_completed) {
+  navigate('/complete-profile')
+} else {
+  navigate('/home')
+}
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed')
     }
@@ -22,8 +26,8 @@ function Login() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="border-b px-6 py-4">
-        <span className="text-2xl font-bold">UniPulse</span>
+      <div className="border-b px-6 py-4 sticky top-0 bg-white z-50">
+        <span className="text-2xl font-bold cursor-pointer" onClick={() => { window.location.href = '/' }}>UniPulse</span>
       </div>
 
       <div className="max-w-sm mx-auto px-6 py-16">

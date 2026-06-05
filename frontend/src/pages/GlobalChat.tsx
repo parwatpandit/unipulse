@@ -14,6 +14,7 @@ function GlobalChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [text, setText] = useState('')
   const socketRef = useRef<Socket | null>(null)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const token = getToken()
@@ -41,6 +42,10 @@ function GlobalChat() {
     }
   }, [])
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView()
+  }, [messages])
+
   const handleSend = () => {
     if (!text.trim()) return
     socketRef.current?.emit('send_global_message', { message: text })
@@ -53,8 +58,8 @@ function GlobalChat() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <div className="border-b px-6 py-3 flex items-center justify-between">
-        <span className="text-xl font-bold">UniPulse</span>
+      <div className="border-b px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
+        <span className="text-xl font-bold cursor-pointer" onClick={() => { window.location.href = '/home' }}>UniPulse</span>
         <input
           type="text"
           placeholder="Search students or courses..."
@@ -74,6 +79,7 @@ function GlobalChat() {
             <p className="text-sm">{msg.message}</p>
           </div>
         ))}
+        <div ref={bottomRef} />
       </div>
 
       <div className="fixed bottom-12 left-0 right-0 border-t bg-white px-4 py-2 flex gap-2">

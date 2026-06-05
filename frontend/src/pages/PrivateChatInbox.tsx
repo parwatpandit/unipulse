@@ -29,8 +29,8 @@ function PrivateChatInbox() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="border-b px-6 py-3 flex items-center justify-between">
-        <span className="text-xl font-bold">UniPulse</span>
+      <div className="border-b px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
+        <span className="text-xl font-bold cursor-pointer" onClick={() => { window.location.href = '/home' }}>UniPulse</span>
         <input
           type="text"
           placeholder="Search students or courses..."

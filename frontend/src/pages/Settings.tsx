@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../utils/api'
 import { removeToken } from '../utils/auth'
+import ReactCrop from 'react-image-crop'
+import type { Crop, PixelCrop } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
 
 interface Profile {
   full_name: string
@@ -21,7 +24,10 @@ function Settings() {
   const [course, setCourse] = useState('')
   const [country, setCountry] = useState('')
   const [relationshipStatus, setRelationshipStatus] = useState('')
-  const [profilePic, setProfilePic] = useState<File | null>(null)
+  const [imgSrc, setImgSrc] = useState('')
+  const [crop, setCrop] = useState<Crop>()
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>()
+  const imgRef = useRef<HTMLImageElement>(null)
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [saved, setSaved] = useState('')
@@ -44,6 +50,47 @@ function Settings() {
     }
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setImgSrc(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleUpdatePicture = async () => {
+    if (!completedCrop || !imgRef.current) return
+    const canvas = document.createElement('canvas')
+    const scaleX = imgRef.current.naturalWidth / imgRef.current.width
+    const scaleY = imgRef.current.naturalHeight / imgRef.current.height
+    canvas.width = completedCrop.width
+    canvas.height = completedCrop.height
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(
+      imgRef.current,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0, 0,
+      completedCrop.width,
+      completedCrop.height
+    )
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      const formData = new FormData()
+      formData.append('image', blob, 'profile.jpg')
+      try {
+        await api.post('/users/profile-picture', formData)
+        setSaved('Profile picture updated.')
+        setImgSrc('')
+        setTimeout(() => setSaved(''), 2000)
+      } catch {
+        setError('Failed to update picture.')
+      }
+    }, 'image/jpeg')
+  }
+
   const handleUpdateProfile = async () => {
     setError('')
     try {
@@ -52,20 +99,6 @@ function Settings() {
       setTimeout(() => setSaved(''), 2000)
     } catch {
       setError('Failed to update profile.')
-    }
-  }
-
-  const handleUpdatePicture = async () => {
-    if (!profilePic) return
-    setError('')
-    try {
-      const formData = new FormData()
-      formData.append('image', profilePic)
-      await api.post('/users/profile-picture', formData)
-      setSaved('Profile picture updated.')
-      setTimeout(() => setSaved(''), 2000)
-    } catch {
-      setError('Failed to update picture.')
     }
   }
 
@@ -89,8 +122,8 @@ function Settings() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="border-b px-6 py-3 flex items-center justify-between">
-        <span className="text-xl font-bold">UniPulse</span>
+      <div className="border-b px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
+        <span className="text-xl font-bold cursor-pointer" onClick={() => { window.location.href = '/home' }}>UniPulse</span>
         <input
           type="text"
           placeholder="Search students or courses..."
@@ -145,9 +178,27 @@ function Settings() {
         {/* Update Profile Picture */}
         <div className="border p-4 mb-4">
           <p className="text-sm font-medium mb-3">Update Profile Picture</p>
-          <input type="file" accept="image/*" onChange={(e) => setProfilePic(e.target.files?.[0] || null)} className="text-sm mb-2" />
-          <br />
-          <button onClick={handleUpdatePicture} className="bg-black text-white px-4 py-2 text-sm">Upload</button>
+          <label className="cursor-pointer border px-4 py-2 text-sm inline-block">
+            Choose Image
+            <input type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+          </label>
+          {imgSrc && (
+            <div className="mt-3">
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                onComplete={(c) => setCompletedCrop(c)}
+                circularCrop
+                aspect={1}
+              >
+                <img ref={imgRef} src={imgSrc} style={{ maxWidth: '100%' }} />
+              </ReactCrop>
+              <br />
+              <button onClick={handleUpdatePicture} className="mt-3 bg-black text-white px-4 py-2 text-sm">
+                Save Picture
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Change Password */}
