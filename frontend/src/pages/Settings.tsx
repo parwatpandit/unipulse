@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../utils/api'
-import { removeToken } from '../utils/auth'
+// import { removeToken } from '../utils/auth'
 import ReactCrop from 'react-image-crop'
 import type { Crop, PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
+import { removeToken, getCurrentUserId } from '../utils/auth'
 
 interface Profile {
   full_name: string
@@ -136,6 +137,12 @@ function Settings() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 pb-20">
         <h1 className="text-xl font-bold mb-4">Settings</h1>
+<button
+  onClick={() => navigate(`/profile/${getCurrentUserId()}`)}
+  className="border px-4 py-2 text-sm mb-4 block"
+>
+  View My Profile
+</button>
 
         {saved && <p className="text-green-600 text-sm mb-4">{saved}</p>}
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}

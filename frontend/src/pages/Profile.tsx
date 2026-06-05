@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import api from '../utils/api'
+import { getCurrentUserId } from '../utils/auth'
 
 interface Profile {
   id: number
@@ -29,6 +30,9 @@ function Profile() {
   const [friendStatus, setFriendStatus] = useState('')
   const [error, setError] = useState('')
 
+  const currentUserId = getCurrentUserId()
+  const isOwnProfile = currentUserId === id
+
   useEffect(() => {
     fetchProfile()
     fetchPosts()
@@ -38,8 +42,10 @@ function Profile() {
     try {
       const res = await api.get(`/users/${id}`)
       setProfile(res.data)
-      const friendRes = await api.get(`/friends/status/${id}`)
-      setFriendStatus(friendRes.data.status)
+      if (!isOwnProfile) {
+        const friendRes = await api.get(`/friends/status/${id}`)
+        setFriendStatus(friendRes.data.status)
+      }
     } catch {
       navigate('/login')
     }
@@ -59,6 +65,13 @@ function Profile() {
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to send request')
     }
+  }
+
+  const handleDeletePost = async (postId: number) => {
+    try {
+      await api.delete(`/posts/${postId}`)
+      setPosts(posts.filter(p => p.id !== postId))
+    } catch {}
   }
 
   if (!profile) return <div className="p-6">Loading...</div>
@@ -102,27 +115,38 @@ function Profile() {
 
           {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
 
-          {friendStatus === '' && (
+          {isOwnProfile ? (
             <button
-              onClick={handleAddFriend}
+              onClick={() => navigate('/settings')}
               className="bg-black text-white px-4 py-1 text-sm"
             >
-              Add Friend
+              Edit Profile
             </button>
-          )}
-          {friendStatus === 'pending' && (
-            <p className="text-sm text-gray-500">Friend request sent</p>
-          )}
-          {friendStatus === 'accepted' && (
-            <div className="flex gap-3 items-center">
-              <p className="text-sm text-gray-500">Friends</p>
-              <button
-                onClick={() => navigate(`/messages/${id}`)}
-                className="bg-black text-white px-4 py-1 text-sm"
-              >
-                Message
-              </button>
-            </div>
+          ) : (
+            <>
+              {friendStatus === '' && (
+                <button
+                  onClick={handleAddFriend}
+                  className="bg-black text-white px-4 py-1 text-sm"
+                >
+                  Add Friend
+                </button>
+              )}
+              {friendStatus === 'pending' && (
+                <p className="text-sm text-gray-500">Friend request sent</p>
+              )}
+              {friendStatus === 'accepted' && (
+                <div className="flex gap-3 items-center">
+                  <p className="text-sm text-gray-500">Friends</p>
+                  <button
+                    onClick={() => navigate(`/messages/${id}`)}
+                    className="bg-black text-white px-4 py-1 text-sm"
+                  >
+                    Message
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -132,6 +156,14 @@ function Profile() {
             <p className="text-sm mb-2">{post.text_content}</p>
             {post.image_url && (
               <img src={post.image_url} alt="" className="w-full border" />
+            )}
+            {isOwnProfile && (
+              <button
+                onClick={() => handleDeletePost(post.id)}
+                className="text-red-500 text-xs mt-2"
+              >
+                Delete post
+              </button>
             )}
           </div>
         ))}
