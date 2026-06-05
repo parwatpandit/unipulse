@@ -6,7 +6,7 @@ from app.database import get_db
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from app.database import SessionLocal
-from sqlalchemy import text
+from sqlalchemy import text as sql_text
 from datetime import datetime
 
 # Redis connection
@@ -31,7 +31,15 @@ async def connect(sid, environ, auth):
     if not user:
         return False  # Reject if invalid token
     
-    await sio.save_session(sid, {'user_id': user['user_id'], 'email': user['email']})
+    db = SessionLocal()
+    try:
+        result = db.execute(sql_text("SELECT course FROM users WHERE id = :uid"), {'uid': user['user_id']})
+        row = result.fetchone()
+        course = row.course if row else ''
+    finally:
+        db.close()
+
+    await sio.save_session(sid, {'user_id': user['user_id'], 'email': user['email'], 'course': course})
     print(f"User {user['email']} connected: {sid}")
 
 @sio.event
@@ -49,17 +57,19 @@ async def send_global_message(sid, data):
     if not text:
         return
 
+    course = session.get('course', '')
+
     message = {
         'user_id': user_id,
         'email': email,
-        'message': text
+        'message': text,
+        'course': course,
+        'created_at': datetime.utcnow().isoformat()
     }
 
-    # Store in Redis (keep last 100 messages)
     r.lpush(GLOBAL_CHAT_KEY, json.dumps(message))
     r.ltrim(GLOBAL_CHAT_KEY, 0, MAX_MESSAGES - 1)
 
-    # Broadcast to all connected clients
     await sio.emit('global_message', message)
 
 @sio.event
@@ -99,7 +109,7 @@ async def send_private_message(sid, data):
     # Save to database
     db = SessionLocal()
     try:
-        db.execute(text("""
+        db.execute(sql_text("""
             INSERT INTO private_messages (sender_id, receiver_id, message_text, is_read, created_at)
             VALUES (:sender_id, :receiver_id, :message_text, false, :created_at)
         """), {
@@ -130,7 +140,7 @@ async def get_private_history(sid, data):
 
     db = SessionLocal()
     try:
-        result = db.execute(text("""
+        result = db.execute(sql_text("""
             SELECT sender_id, receiver_id, message_text, created_at
             FROM private_messages
             WHERE (sender_id = :user_id AND receiver_id = :other_id)
