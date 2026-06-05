@@ -93,7 +93,10 @@ function PrivateChat() {
           className="border px-3 py-1 text-sm w-64"
           readOnly
         />
-        <Link to="/notifications" className="text-sm">🔔</Link>
+        <div className="flex items-center gap-3">
+  <button onClick={() => navigate('/create-post')} className="bg-black text-white px-3 py-1 text-sm">Post</button>
+  <Link to="/notifications" className="text-sm">🔔</Link>
+</div>
       </div>
 
       <div className="fixed top-14 left-0 right-0 px-4 py-2 z-40 pointer-events-none">

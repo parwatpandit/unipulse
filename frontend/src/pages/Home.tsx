@@ -18,9 +18,9 @@ interface Post {
 function Home() {
   const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
-  const [text, setText] = useState('')
-  const [image, setImage] = useState<File | null>(null)
-  const [error, setError] = useState('')
+  // const [text, setText] = useState('')
+  // const [image, setImage] = useState<File | null>(null)
+  // const [error, setError] = useState('')
 
   useEffect(() => {
     fetchPosts()
@@ -45,21 +45,21 @@ function Home() {
     }
   }
 
-  const handlePost = async () => {
-    if (!text.trim()) return
-    setError('')
-    try {
-      const formData = new FormData()
-      formData.append('text_content', text)
-      if (image) formData.append('image', image)
-      await api.post('/posts', formData)
-      setText('')
-      setImage(null)
-      fetchPosts()
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to post')
-    }
-  }
+  // const handlePost = async () => {
+  //   if (!text.trim()) return
+  //   setError('')
+  //   try {
+  //     const formData = new FormData()
+  //     formData.append('text_content', text)
+  //     if (image) formData.append('image', image)
+  //     await api.post('/posts', formData)
+  //     setText('')
+  //     setImage(null)
+  //     fetchPosts()
+  //   } catch (err: any) {
+  //     setError(err.response?.data?.detail || 'Failed to post')
+  //   }
+  // }
 
   const handleLike = async (postId: string) => {
     try {
@@ -84,11 +84,18 @@ function Home() {
           className="border px-3 py-1 text-sm w-64"
           readOnly
         />
-        <Link to="/notifications" className="text-sm">🔔</Link>
+        <div className="flex items-center gap-3">
+  <button onClick={() => navigate('/create-post')} className="bg-black text-white px-3 py-1 text-sm">Post</button>
+  <div className="flex items-center gap-3">
+  <button onClick={() => navigate('/create-post')} className="bg-black text-white px-3 py-1 text-sm">Post</button>
+  <Link to="/notifications" className="text-sm">🔔</Link>
+</div>
+</div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 pt-20">
-        {/* Create Post */}
+        {/* adding dedicated page for this instead of being in home page */}
+        {/* Create Post
         <div className="border p-4 mb-6">
           <textarea
             value={text}
@@ -112,7 +119,7 @@ function Home() {
             </button>
           </div>
           {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-        </div>
+        </div> */}
 
         {/* Posts Feed */}
         {posts.map((post) => (

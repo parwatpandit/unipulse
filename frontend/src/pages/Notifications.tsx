@@ -82,7 +82,10 @@ function Notifications() {
           className="border px-3 py-1 text-sm w-64"
           readOnly
         />
-        <Link to="/notifications" className="text-sm">🔔</Link>
+        <div className="flex items-center gap-3">
+  <button onClick={() => navigate('/create-post')} className="bg-black text-white px-3 py-1 text-sm">Post</button>
+  <Link to="/notifications" className="text-sm">🔔</Link>
+</div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 pt-20">

@@ -11,6 +11,7 @@ import PrivateChatInbox from './pages/PrivateChatInbox'
 import PrivateChat from './pages/PrivateChat'
 import Notifications from './pages/Notifications'
 import Settings from './pages/Settings'
+import CreatePost from './pages/CreatePost'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/messages/:id" element={<PrivateChat />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/create-post" element={<CreatePost />} />
       </Routes>
     </BrowserRouter>
   )
