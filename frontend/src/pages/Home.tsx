@@ -3,14 +3,16 @@ import { useNavigate, Link } from 'react-router-dom'
 import api from '../utils/api'
 
 interface Post {
-  id: number
-  user_id: number
+  id: string
+  user_id: string
   full_name: string
   course: string
   profile_picture_url: string | null
   text_content: string
   image_url: string | null
   created_at: string
+  like_count: number
+  liked: boolean
 }
 
 function Home() {
@@ -27,7 +29,17 @@ function Home() {
   const fetchPosts = async () => {
     try {
       const res = await api.get('/posts')
-      setPosts(res.data)
+      const postsWithLikes = await Promise.all(
+        res.data.map(async (post: any) => {
+          try {
+            const likeRes = await api.get(`/likes/${post.id}`)
+            return { ...post, like_count: likeRes.data.count, liked: likeRes.data.liked }
+          } catch {
+            return { ...post, like_count: 0, liked: false }
+          }
+        })
+      )
+      setPosts(postsWithLikes)
     } catch {
       navigate('/login')
     }
@@ -49,13 +61,22 @@ function Home() {
     }
   }
 
+  const handleLike = async (postId: string) => {
+    try {
+      const res = await api.post(`/likes/${postId}`)
+      setPosts(posts.map(p =>
+        p.id === postId
+          ? { ...p, liked: res.data.liked, like_count: res.data.liked ? p.like_count + 1 : p.like_count - 1 }
+          : p
+      ))
+    } catch {}
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Top Nav */}
       <div className="border-b px-6 py-3 flex items-center justify-between sticky top-0 bg-white z-50">
-      {/* <Link to="/home" className="text-xl font-bold">UniPulse</Link> */}
-      <span className="text-xl font-bold cursor-pointer" onClick={() => { window.location.href = '/home' }}>UniPulse</span>
-        
+        <span className="text-xl font-bold cursor-pointer" onClick={() => { window.location.href = '/home' }}>UniPulse</span>
         <input
           type="text"
           placeholder="Search students or courses..."
@@ -111,8 +132,16 @@ function Home() {
             </div>
             <p className="text-sm mb-2">{post.text_content}</p>
             {post.image_url && (
-              <img src={post.image_url} alt="" className="w-full border" />
+              <img src={post.image_url} alt="" className="w-full border mb-2" />
             )}
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={() => handleLike(post.id)}
+                className={`text-sm px-3 py-1 border ${post.liked ? 'bg-black text-white' : 'bg-white text-black'}`}
+              >
+                ♥ {post.like_count}
+              </button>
+            </div>
           </div>
         ))}
       </div>

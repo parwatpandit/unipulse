@@ -8,6 +8,7 @@ from app.routers import notifications
 from app.routers import live_status
 from app.routers.chat import sio
 from app.routers import messages
+from app.routers import likes
 import socketio
 
 load_dotenv()
@@ -30,6 +31,7 @@ app.include_router(search.router)
 app.include_router(notifications.router)
 app.include_router(live_status.router)
 app.include_router(messages.router)
+app.include_router(likes.router)
 
 @app.get("/")
 def root():

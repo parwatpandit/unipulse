@@ -16,10 +16,18 @@ interface Profile {
 }
 
 interface Post {
-  id: number
+  id: string
   text_content: string
   image_url: string | null
   created_at: string
+  like_count: number
+  liked: boolean
+}
+
+interface LikedUser {
+  user_id: string
+  full_name: string
+  profile_picture_url: string | null
 }
 
 function Profile() {
@@ -29,6 +37,8 @@ function Profile() {
   const [posts, setPosts] = useState<Post[]>([])
   const [friendStatus, setFriendStatus] = useState('')
   const [error, setError] = useState('')
+  const [likedUsers, setLikedUsers] = useState<{ [postId: string]: LikedUser[] }>({})
+  const [showLiked, setShowLiked] = useState<{ [postId: string]: boolean }>({})
 
   const currentUserId = getCurrentUserId()
   const isOwnProfile = currentUserId === id
@@ -54,7 +64,17 @@ function Profile() {
   const fetchPosts = async () => {
     try {
       const res = await api.get(`/posts/user/${id}`)
-      setPosts(res.data)
+      const postsWithLikes = await Promise.all(
+        res.data.map(async (post: any) => {
+          try {
+            const likeRes = await api.get(`/likes/${post.id}`)
+            return { ...post, like_count: likeRes.data.count, liked: likeRes.data.liked }
+          } catch {
+            return { ...post, like_count: 0, liked: false }
+          }
+        })
+      )
+      setPosts(postsWithLikes)
     } catch {}
   }
 
@@ -67,10 +87,33 @@ function Profile() {
     }
   }
 
-  const handleDeletePost = async (postId: number) => {
+  const handleDeletePost = async (postId: string) => {
     try {
       await api.delete(`/posts/${postId}`)
       setPosts(posts.filter(p => p.id !== postId))
+    } catch {}
+  }
+
+  const handleLike = async (postId: string) => {
+  try {
+    const res = await api.post(`/likes/${postId}`)
+    setPosts(posts.map(p =>
+      p.id === postId
+        ? { ...p, liked: res.data.liked, like_count: res.data.liked ? p.like_count + 1 : p.like_count - 1 }
+        : p
+    ))
+  } catch {}
+}
+
+  const handleShowLiked = async (postId: string) => {
+    if (showLiked[postId]) {
+      setShowLiked({ ...showLiked, [postId]: false })
+      return
+    }
+    try {
+      const res = await api.get(`/likes/${postId}/users`)
+      setLikedUsers({ ...likedUsers, [postId]: res.data })
+      setShowLiked({ ...showLiked, [postId]: true })
     } catch {}
   }
 
@@ -155,15 +198,47 @@ function Profile() {
           <div key={post.id} className="border p-4 mb-4">
             <p className="text-sm mb-2">{post.text_content}</p>
             {post.image_url && (
-              <img src={post.image_url} alt="" className="w-full border" />
+              <img src={post.image_url} alt="" className="w-full border mb-2" />
             )}
-            {isOwnProfile && (
+            <div className="flex items-center gap-3 mt-2">
               <button
-                onClick={() => handleDeletePost(post.id)}
-                className="text-red-500 text-xs mt-2"
-              >
-                Delete post
-              </button>
+  onClick={() => handleLike(post.id)}
+  className={`text-sm px-3 py-1 border ${post.liked ? 'bg-black text-white' : 'bg-white text-black'}`}
+>
+  ♥ {post.like_count}
+</button>
+              {isOwnProfile && post.like_count > 0 && (
+                <button
+                  onClick={() => handleShowLiked(post.id)}
+                  className="text-xs underline text-gray-500"
+                >
+                  {showLiked[post.id] ? 'Hide' : 'See who liked'}
+                </button>
+              )}
+              {isOwnProfile && (
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="text-red-500 text-xs ml-auto"
+                >
+                  Delete post
+                </button>
+              )}
+            </div>
+            {isOwnProfile && showLiked[post.id] && likedUsers[post.id] && (
+              <div className="mt-2 border-t pt-2">
+                {likedUsers[post.id].map(u => (
+                  <div key={u.user_id} className="flex items-center gap-2 py-1">
+                    <div className="w-6 h-6 bg-gray-200 rounded-full overflow-hidden">
+                      {u.profile_picture_url && (
+                        <img src={u.profile_picture_url} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </div>
+                    <Link to={`/profile/${u.user_id}`} className="text-sm underline">
+                      {u.full_name}
+                    </Link>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         ))}
