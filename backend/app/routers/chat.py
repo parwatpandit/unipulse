@@ -126,7 +126,8 @@ async def send_private_message(sid, data):
     await sio.emit('private_message', {
         'sender_id': user_id,
         'receiver_id': receiver_id,
-        'message': message_text
+        'message': message_text,
+        'created_at': datetime.utcnow().isoformat()
     }, room=room)
 
 @sio.event
