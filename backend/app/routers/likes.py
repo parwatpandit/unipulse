@@ -24,11 +24,13 @@ def toggle_like(post_id: str, db: Session = Depends(get_db), current_user: User 
     if existing:
         db.delete(existing)
         db.commit()
-        return {"liked": False}
-    new_like = Like(post_id=post_id, user_id=str(current_user.id))
-    db.add(new_like)
-    db.commit()
-    return {"liked": True}
+    else:
+        new_like = Like(post_id=post_id, user_id=str(current_user.id))
+        db.add(new_like)
+        db.commit()
+    count = db.query(Like).filter(Like.post_id == post_id).count()
+    liked = not bool(existing)
+    return {"liked": liked, "like_count": count}
 
 @router.get("/{post_id}")
 def get_likes(post_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

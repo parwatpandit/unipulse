@@ -63,7 +63,7 @@ def create_post(
 def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     posts = db.query(Post, User).join(User, Post.user_id == User.id).order_by(Post.created_at.desc()).all()
     
-    post_ids = [str(post.id) for post, user in posts]
+    post_ids = [post.id for post, user in posts]
     
     like_counts = dict(
         db.query(Like.post_id, func.count(Like.id))
@@ -73,14 +73,14 @@ def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(ge
     )
     
     liked_posts = set(
-        row[0] for row in db.query(Like.post_id)
-        .filter(Like.post_id.in_(post_ids), Like.user_id == str(current_user.id))
-        .all()
-    )
+    row[0] for row in db.query(Like.post_id)
+    .filter(Like.post_id.in_(post_ids), Like.user_id == current_user.id)
+    .all()
+)
     
     result = []
     for post, user in posts:
-        pid = str(post.id)
+        pid = post.id
         result.append({
             "id": post.id,
             "user_id": post.user_id,
@@ -99,24 +99,24 @@ def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(ge
 def get_posts_by_user(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     posts = db.query(Post, User).join(User, Post.user_id == User.id).filter(Post.user_id == user_id).order_by(Post.created_at.desc()).all()
 
-    post_ids = [str(post.id) for post, user in posts]
+    post_ids = [post.id for post, user in posts]
 
     like_counts = dict(
         db.query(Like.post_id, func.count(Like.id))
         .filter(Like.post_id.in_(post_ids))
         .group_by(Like.post_id)
         .all()
-    ) if post_ids else {}
+)
 
     liked_posts = set(
         row[0] for row in db.query(Like.post_id)
-        .filter(Like.post_id.in_(post_ids), Like.user_id == str(current_user.id))
+        .filter(Like.post_id.in_(post_ids), Like.user_id == current_user.id)
         .all()
     ) if post_ids else set()
 
     result = []
     for post, user in posts:
-        pid = str(post.id)
+        pid = post.id
         result.append({
             "id": post.id,
             "user_id": post.user_id,
