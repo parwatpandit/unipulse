@@ -78,6 +78,16 @@ function Profile() {
     }
   }
 
+  const handleRemoveFriend = async () => {
+    try {
+      await api.delete(`/friends/remove/${id}`)
+      setFriendStatus('')
+      setPosts([])
+      navigate('/home')
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to remove friend')
+    }
+  }
   const handleDeletePost = async (postId: string) => {
     try {
       await api.delete(`/posts/${postId}`)
@@ -167,6 +177,12 @@ function Profile() {
                     className="bg-black text-white px-4 py-1 text-sm"
                   >
                     Message
+                  </button>
+                  <button
+                    onClick={handleRemoveFriend}
+                    className="border border-red-500 text-red-500 px-4 py-1 text-sm"
+                  >
+                    Remove Friend
                   </button>
                 </div>
               )}

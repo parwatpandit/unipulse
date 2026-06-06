@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models.user import User
 from app.utils.auth import get_current_user
 from sqlalchemy import Column, String, DateTime
+from sqlalchemy import text as sql_text
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
@@ -92,3 +93,39 @@ def get_friend_status(user_id: str, db: Session = Depends(get_db), current_user:
     if not friend:
         return {"status": "", "request_id": None}
     return {"status": friend.status, "request_id": str(friend.id)}
+
+@router.delete("/remove/{user_id}")
+def remove_friend(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Delete the friendship
+    friend = db.query(Friend).filter(
+        ((Friend.user_id == current_user.id) & (Friend.friend_id == uuid.UUID(user_id))) |
+        ((Friend.user_id == uuid.UUID(user_id)) & (Friend.friend_id == current_user.id))
+    ).first()
+    
+    if not friend:
+        raise HTTPException(status_code=404, detail="Friend not found")
+    
+    db.delete(friend)
+    
+    # Delete all messages between them
+    db.execute(sql_text("""
+        DELETE FROM private_messages
+        WHERE (sender_id = :user_id AND receiver_id = :other_id)
+           OR (sender_id = :other_id AND receiver_id = :user_id)
+    """), {
+        'user_id': str(current_user.id),
+        'other_id': user_id
+    })
+
+    # Delete notifications between them
+    db.execute(sql_text("""
+        DELETE FROM notifications
+        WHERE (user_id = :user_id AND from_user_id = :other_id)
+           OR (user_id = :other_id AND from_user_id = :user_id)
+    """), {
+        'user_id': str(current_user.id),
+        'other_id': user_id
+    })
+
+    db.commit()
+    return {"message": "Friend removed and all data erased"}
