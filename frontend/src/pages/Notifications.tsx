@@ -8,6 +8,8 @@ interface Notification {
   type: string
   from_user_id: string
   from_user_name: string
+  reference_id: string | null
+  message_preview: string | null
   is_read: boolean
   created_at: string
 }
@@ -72,6 +74,13 @@ function Notifications() {
     return type
   }
 
+  const handleNotificationClick = (n: Notification) => {
+    if (n.type === 'message' && n.reference_id) {
+      markRead(n.id)
+      navigate(`/messages/${n.reference_id}`)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
@@ -94,7 +103,20 @@ function Notifications() {
             >
               ✕
             </button>
-            <p className="text-sm">{getMessage(n.type, n.from_user_name)}</p>
+
+            <p
+              className={`text-sm ${n.type === 'message' ? 'cursor-pointer underline' : ''}`}
+              onClick={() => handleNotificationClick(n)}
+            >
+              {getMessage(n.type, n.from_user_name)}
+            </p>
+            {n.message_preview && (
+              <p className="text-xs text-gray-500 mt-1">"{n.message_preview}"</p>
+            )}
+            <p className="text-xs text-gray-400 mt-1">
+              {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {new Date(n.created_at).toLocaleDateString()}
+            </p>
+
             {n.type === 'friend_request' && (
               <div className="flex gap-2 mt-2">
                 <button
@@ -111,8 +133,12 @@ function Notifications() {
                 </button>
               </div>
             )}
-            {!n.is_read && n.type !== 'friend_request' && (
-              <p className="text-xs text-gray-400 mt-1 cursor-pointer" onClick={() => markRead(n.id)}>
+
+            {!n.is_read && n.type !== 'friend_request' && n.type !== 'message' && (
+              <p
+                className="text-xs text-gray-400 mt-1 cursor-pointer"
+                onClick={() => markRead(n.id)}
+              >
                 Click to mark as read
               </p>
             )}

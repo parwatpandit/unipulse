@@ -16,6 +16,8 @@ class Notification(Base):
     user_id = Column(UUID(as_uuid=True), nullable=False)
     from_user_id = Column(UUID(as_uuid=True), nullable=False)
     type = Column(String, nullable=False)
+    reference_id = Column(String, nullable=True)
+    message_preview = Column(String, nullable=True)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -35,6 +37,8 @@ def get_notifications(db: Session = Depends(get_db), current_user: User = Depend
             "from_user_id": str(n.from_user_id),
             "from_user_name": from_user.full_name if from_user else "Unknown",
             "type": n.type,
+            "reference_id": n.reference_id,
+            "message_preview": n.message_preview if hasattr(n, 'message_preview') else None,
             "is_read": n.is_read,
             "created_at": n.created_at
         })

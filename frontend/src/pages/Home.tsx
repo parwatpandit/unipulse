@@ -19,9 +19,6 @@ interface Post {
 function Home() {
   const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
-  // const [text, setText] = useState('')
-  // const [image, setImage] = useState<File | null>(null)
-  // const [error, setError] = useState('')
 
   useEffect(() => {
     fetchPosts()
@@ -36,32 +33,18 @@ function Home() {
   }
 }
 
-  // const handlePost = async () => {
-  //   if (!text.trim()) return
-  //   setError('')
-  //   try {
-  //     const formData = new FormData()
-  //     formData.append('text_content', text)
-  //     if (image) formData.append('image', image)
-  //     await api.post('/posts', formData)
-  //     setText('')
-  //     setImage(null)
-  //     fetchPosts()
-  //   } catch (err: any) {
-  //     setError(err.response?.data?.detail || 'Failed to post')
-  //   }
-  // }
+
 
   const handleLike = async (postId: string) => {
-    try {
-      const res = await api.post(`/likes/${postId}`)
-      setPosts(posts.map(p =>
-        p.id === postId
-          ? { ...p, liked: res.data.liked, like_count: res.data.liked ? p.like_count + 1 : p.like_count - 1 }
-          : p
-      ))
-    } catch {}
-  }
+  try {
+    const res = await api.post(`/likes/${postId}`)
+    setPosts(posts.map(p =>
+      p.id === postId
+        ? { ...p, liked: res.data.liked, like_count: res.data.like_count }
+        : p
+    ))
+  } catch {}
+}
 
   return (
     <div className="min-h-screen bg-white">
@@ -69,32 +52,6 @@ function Home() {
       <Navbar />
 
       <div className="max-w-2xl mx-auto px-4 py-6 pt-20">
-        {/* adding dedicated page for this instead of being in home page */}
-        {/* Create Post
-        <div className="border p-4 mb-6">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="What's on your mind?"
-            className="w-full border px-3 py-2 text-sm mb-2 resize-none"
-            rows={3}
-          />
-          <div className="flex items-center justify-between">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImage(e.target.files?.[0] || null)}
-              className="text-sm"
-            />
-            <button
-              onClick={handlePost}
-              className="bg-black text-white px-4 py-1 text-sm"
-            >
-              Post
-            </button>
-          </div>
-          {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-        </div> */}
 
         {/* Posts Feed */}
         {posts.map((post) => (

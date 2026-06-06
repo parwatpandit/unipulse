@@ -1,7 +1,23 @@
 import { useNavigate, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import api from '../utils/api'
 
 function Navbar() {
   const navigate = useNavigate()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get('/notifications/unread-count')
+      setUnreadCount(res.data.unread_count)
+    } catch {}
+  }
+
+  useEffect(() => {
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="border-b px-6 py-3 flex items-center justify-between fixed top-0 left-0 right-0 bg-white z-50">
@@ -15,7 +31,14 @@ function Navbar() {
       />
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/create-post')} className="bg-black text-white px-3 py-1 text-sm">Post</button>
-        <Link to="/notifications" className="text-sm">🔔</Link>
+        <Link to="/notifications" className="relative text-sm">
+          🔔
+          {unreadCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </Link>
       </div>
     </div>
   )

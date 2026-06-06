@@ -118,6 +118,33 @@ async def send_private_message(sid, data):
             'message_text': message_text,
             'created_at': datetime.utcnow()
         })
+
+        # Only notify if receiver is not already in this private room
+        room = get_private_room(user_id, receiver_id)
+        receiver_in_room = False
+        try:
+            room_sockets = sio.manager.get_participants('/', room)
+            for socket_sid, _ in room_sockets:
+                socket_session = await sio.get_session(socket_sid)
+                if socket_session.get('user_id') == receiver_id:
+                    receiver_in_room = True
+                    break
+        except Exception:
+            receiver_in_room = False
+
+        if not receiver_in_room:
+            preview = message_text if len(message_text) <= 40 else message_text[:40] + '...'
+            db.execute(sql_text("""
+                INSERT INTO notifications (id, user_id, from_user_id, type, reference_id, is_read, created_at, message_preview)
+                VALUES (gen_random_uuid(), :user_id, :from_user_id, 'message', :reference_id, false, :created_at, :preview)
+            """), {
+                'user_id': receiver_id,
+                'from_user_id': user_id,
+                'reference_id': user_id,
+                'created_at': datetime.utcnow(),
+                'preview': preview
+            })
+
         db.commit()
     finally:
         db.close()
