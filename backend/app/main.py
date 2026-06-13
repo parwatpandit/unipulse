@@ -33,7 +33,7 @@ app.include_router(live_status.router)
 app.include_router(messages.router)
 app.include_router(likes.router)
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "Unipulse API is running"}
 
