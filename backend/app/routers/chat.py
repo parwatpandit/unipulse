@@ -12,7 +12,7 @@ from datetime import datetime
 # Redis connection
 import os
 redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-r = redis.from_url(redis_url, decode_responses=True, ssl_cert_reqs="none")
+r = redis.from_url(redis_url, decode_responses=True, ssl_cert_reqs="none", ssl_check_hostname=False)
 
 # Socket.io server
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*', logger=True, engineio_logger=True)
