@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import api from '../utils/api'
 import Navbar from '../components/Navbar'
@@ -19,32 +19,61 @@ interface Post {
 function Home() {
   const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
+  const [loadingMore, setLoadingMore] = useState(false)
+
+  const skipRef = useRef(0)
+  const hasMoreRef = useRef(true)
+  const loadingMoreRef = useRef(false)
 
   useEffect(() => {
     fetchPosts()
   }, [])
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const nearBottom = window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 200
+      if (nearBottom && hasMoreRef.current && !loadingMoreRef.current) {
+        loadMore()
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const fetchPosts = async () => {
-  try {
-    const res = await api.get('/posts')
-    setPosts(res.data)
-  } catch {
-    navigate('/login')
+    try {
+      const res = await api.get('/posts?skip=0&limit=25')
+      setPosts(res.data)
+      skipRef.current = res.data.length
+      hasMoreRef.current = res.data.length === 25
+    } catch {
+      navigate('/login')
+    }
   }
-}
 
-
+  const loadMore = async () => {
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+    try {
+      const res = await api.get(`/posts?skip=${skipRef.current}&limit=25`)
+      setPosts(prev => [...prev, ...res.data])
+      skipRef.current += res.data.length
+      hasMoreRef.current = res.data.length === 25
+    } catch {}
+    loadingMoreRef.current = false
+    setLoadingMore(false)
+  }
 
   const handleLike = async (postId: string) => {
-  try {
-    const res = await api.post(`/likes/${postId}`)
-    setPosts(posts.map(p =>
-      p.id === postId
-        ? { ...p, liked: res.data.liked, like_count: res.data.like_count }
-        : p
-    ))
-  } catch {}
-}
+    try {
+      const res = await api.post(`/likes/${postId}`)
+      setPosts(posts.map(p =>
+        p.id === postId
+          ? { ...p, liked: res.data.liked, like_count: res.data.like_count }
+          : p
+      ))
+    } catch {}
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,6 +112,10 @@ function Home() {
             </div>
           </div>
         ))}
+
+        {loadingMore && (
+          <p className="text-center text-sm text-gray-400 py-4">Loading more...</p>
+        )}
       </div>
 
       {/* Bottom Nav */}

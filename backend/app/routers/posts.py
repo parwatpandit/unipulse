@@ -60,8 +60,8 @@ def create_post(
     }
 
 @router.get("/", response_model=list[CreatePostResponse])
-def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    posts = db.query(Post, User).join(User, Post.user_id == User.id).order_by(Post.created_at.desc()).all()
+def get_all_posts(skip: int = 0, limit: int = 25, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    posts = db.query(Post, User).join(User, Post.user_id == User.id).order_by(Post.created_at.desc()).offset(skip).limit(limit).all()
     
     post_ids = [post.id for post, user in posts]
     
@@ -70,13 +70,13 @@ def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(ge
         .filter(Like.post_id.in_(post_ids))
         .group_by(Like.post_id)
         .all()
-    )
+    ) if post_ids else {}
     
     liked_posts = set(
-    row[0] for row in db.query(Like.post_id)
-    .filter(Like.post_id.in_(post_ids), Like.user_id == current_user.id)
-    .all()
-)
+        row[0] for row in db.query(Like.post_id)
+        .filter(Like.post_id.in_(post_ids), Like.user_id == current_user.id)
+        .all()
+    ) if post_ids else set()
     
     result = []
     for post, user in posts:
