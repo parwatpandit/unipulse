@@ -11,15 +11,8 @@ from datetime import datetime
 
 # Redis connection
 import os
-import ssl
 redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
-if redis_url.startswith('rediss://'):
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-    r = redis.from_url(redis_url, decode_responses=True, ssl_context=ssl_context)
-else:
-    r = redis.from_url(redis_url, decode_responses=True)
+r = redis.from_url(redis_url, decode_responses=True, ssl_cert_reqs="none")
 
 # Socket.io server
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*', logger=True, engineio_logger=True)
