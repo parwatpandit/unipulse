@@ -8,10 +8,12 @@ function CreatePost() {
   const [text, setText] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [error, setError] = useState('')
+  const [posting, setPosting] = useState(false)
 
   const handlePost = async () => {
     if (!text.trim()) return
     setError('')
+    setPosting(true)
     try {
       const formData = new FormData()
       formData.append('text_content', text)
@@ -20,6 +22,7 @@ function CreatePost() {
       navigate('/home')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to post')
+      setPosting(false)
     }
   }
 
@@ -55,13 +58,15 @@ function CreatePost() {
           <div className="flex gap-3">
             <button
               onClick={handlePost}
-              className="bg-black text-white px-6 py-2 text-sm"
+              disabled={posting}
+              className="bg-black text-white px-6 py-2 text-sm disabled:opacity-50"
             >
-              Post
+              {posting ? 'Posting...' : 'Post'}
             </button>
             <button
               onClick={() => navigate('/home')}
-              className="border px-6 py-2 text-sm"
+              disabled={posting}
+              className="border px-6 py-2 text-sm disabled:opacity-50"
             >
               Cancel
             </button>
