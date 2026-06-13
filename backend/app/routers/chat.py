@@ -10,10 +10,11 @@ from sqlalchemy import text as sql_text
 from datetime import datetime
 
 # Redis connection
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+import os
+r = redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379'), decode_responses=True)
 
 # Socket.io server
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*', logger=True, engineio_logger=True)
 
 GLOBAL_CHAT_KEY = 'global_chat_messages'
 MAX_MESSAGES = 100
