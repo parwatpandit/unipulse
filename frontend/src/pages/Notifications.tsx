@@ -17,6 +17,7 @@ interface Notification {
 function Notifications() {
   const navigate = useNavigate()
   const [notifications, setNotifications] = useState<Notification[]>([])
+const [handledRequests, setHandledRequests] = useState<{[key: string]: 'accepted' | 'declined'}>({})
 
   useEffect(() => {
     fetchNotifications()
@@ -53,7 +54,7 @@ function Notifications() {
       const requestId = res.data.request_id
       await api.post(`/friends/accept/${requestId}`)
       markRead(notificationId)
-      fetchNotifications()
+      setHandledRequests(prev => ({ ...prev, [notificationId]: 'accepted' }))
     } catch {}
   }
 
@@ -63,7 +64,7 @@ function Notifications() {
       const requestId = res.data.request_id
       await api.post(`/friends/decline/${requestId}`)
       markRead(notificationId)
-      fetchNotifications()
+      setHandledRequests(prev => ({ ...prev, [notificationId]: 'declined' }))
     } catch {}
   }
 
@@ -118,20 +119,28 @@ function Notifications() {
             </p>
 
             {n.type === 'friend_request' && (
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => handleAccept(n.id, n.from_user_id)}
-                  className="bg-black text-white px-3 py-1 text-xs"
-                >
-                  Accept
-                </button>
-                <button
-                  onClick={() => handleDecline(n.id, n.from_user_id)}
-                  className="border px-3 py-1 text-xs"
-                >
-                  Decline
-                </button>
-              </div>
+              handledRequests[n.id] ? (
+                <p className="text-xs text-gray-500 mt-2">
+                  {handledRequests[n.id] === 'accepted'
+                    ? `You accepted ${n.from_user_name}'s friend request`
+                    : `You declined ${n.from_user_name}'s friend request`}
+                </p>
+              ) : (
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => handleAccept(n.id, n.from_user_id)}
+                    className="bg-black text-white px-3 py-1 text-xs"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => handleDecline(n.id, n.from_user_id)}
+                    className="border px-3 py-1 text-xs"
+                  >
+                    Decline
+                  </button>
+                </div>
+              )
             )}
 
             {!n.is_read && n.type !== 'friend_request' && n.type !== 'message' && (
