@@ -30,7 +30,7 @@ function PrivateChat() {
     fetchOtherUser()
     fetchMyId()
 
-    const socket = io('http://localhost:8000', {
+    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:8000', {
       auth: { token }
     })
     socketRef.current = socket

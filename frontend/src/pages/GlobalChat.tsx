@@ -46,7 +46,7 @@ function GlobalChat() {
     const token = getToken()
     if (!token) return navigate('/login')
 
-    const socket = io('http://localhost:8000', { auth: { token } })
+    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:8000', { auth: { token } })
     socketRef.current = socket
 
     socket.on('connect', () => {
