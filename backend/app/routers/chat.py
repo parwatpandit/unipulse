@@ -146,6 +146,7 @@ async def send_private_message(sid, data):
                 'created_at': datetime.utcnow(),
                 'preview': preview
             })
+            await sio.emit('new_notification', {}, room=str(receiver_id))
 
         db.commit()
     finally:
@@ -188,3 +189,11 @@ async def get_private_history(sid, data):
         db.close()
 
     await sio.emit('private_history', messages, to=sid)
+
+@sio.event
+async def join_notification_room(sid):
+    session = await sio.get_session(sid)
+    user_id = session.get('user_id')
+    if user_id:
+        await sio.enter_room(sid, str(user_id))
+        print(f"User {user_id} joined notification room")

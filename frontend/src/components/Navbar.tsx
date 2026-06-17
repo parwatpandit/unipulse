@@ -1,6 +1,12 @@
 import { useNavigate, Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import api from '../utils/api'
+import { io, Socket } from 'socket.io-client'
+import { getToken } from '../utils/auth'
+
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
+let socket: Socket | null = null
 
 function Navbar() {
   const navigate = useNavigate()
@@ -15,8 +21,27 @@ function Navbar() {
 
   useEffect(() => {
     fetchUnreadCount()
-    const interval = setInterval(fetchUnreadCount, 5000)
-    return () => clearInterval(interval)
+
+    const token = getToken()
+    if (!token) return
+
+    socket = io(SOCKET_URL, {
+      auth: { token },
+      transports: ['websocket'],
+    })
+
+    socket.on('connect', () => {
+      socket?.emit('join_notification_room')
+    })
+
+    socket.on('new_notification', () => {
+      setUnreadCount((prev) => prev + 1)
+    })
+
+    return () => {
+      socket?.disconnect()
+      socket = null
+    }
   }, [])
 
   return (

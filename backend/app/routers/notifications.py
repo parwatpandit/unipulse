@@ -8,6 +8,8 @@ from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
 from app.database import Base
+import asyncio
+from app.routers.chat import sio
 
 class Notification(Base):
     __tablename__ = "notifications"
@@ -20,6 +22,9 @@ class Notification(Base):
     message_preview = Column(String, nullable=True)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+async def emit_notification(user_id: str):
+    await sio.emit('new_notification', {}, room=str(user_id))
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
