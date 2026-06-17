@@ -10,21 +10,43 @@ function CreatePost() {
   const [error, setError] = useState('')
   const [posting, setPosting] = useState(false)
 
-  const handlePost = async () => {
-    if (!text.trim()) return
-    setError('')
-    setPosting(true)
-    try {
-      const formData = new FormData()
-      formData.append('text_content', text)
-      if (image) formData.append('image', image)
-      await api.post('/posts', formData)
-      navigate('/home')
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to post')
-      setPosting(false)
+  const compressImage = (file: File): Promise<Blob> => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const maxWidth = 800
+      const scale = Math.min(1, maxWidth / img.width)
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      URL.revokeObjectURL(url)
+      canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.7)
     }
+    img.src = url
+  })
+}
+
+const handlePost = async () => {
+  if (!text.trim()) return
+  setError('')
+  setPosting(true)
+  try {
+    const formData = new FormData()
+    formData.append('text_content', text)
+    if (image) {
+      const compressed = await compressImage(image)
+      formData.append('image', compressed, 'image.jpg')
+    }
+    await api.post('/posts', formData)
+    navigate('/home')
+  } catch (err: any) {
+    setError(err.response?.data?.detail || 'Failed to post')
+    setPosting(false)
   }
+}
 
   return (
     <div className="min-h-screen bg-white">

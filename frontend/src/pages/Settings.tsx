@@ -63,10 +63,13 @@ function Settings() {
   const handleUpdatePicture = async () => {
     if (!completedCrop || !imgRef.current) return
     const canvas = document.createElement('canvas')
+    const maxSize = 400
+    const cropSize = Math.min(completedCrop.width, completedCrop.height)
+    const outputSize = Math.min(maxSize, cropSize)
     const scaleX = imgRef.current.naturalWidth / imgRef.current.width
     const scaleY = imgRef.current.naturalHeight / imgRef.current.height
-    canvas.width = completedCrop.width
-    canvas.height = completedCrop.height
+    canvas.width = outputSize
+    canvas.height = outputSize
     const ctx = canvas.getContext('2d')!
     ctx.drawImage(
       imgRef.current,
@@ -75,8 +78,8 @@ function Settings() {
       completedCrop.width * scaleX,
       completedCrop.height * scaleY,
       0, 0,
-      completedCrop.width,
-      completedCrop.height
+      outputSize,
+      outputSize
     )
     canvas.toBlob(async (blob) => {
       if (!blob) return
@@ -90,7 +93,7 @@ function Settings() {
       } catch {
         setError('Failed to update picture.')
       }
-    }, 'image/jpeg')
+    }, 'image/jpeg', 0.8)
   }
 
   const handleUpdateProfile = async () => {
