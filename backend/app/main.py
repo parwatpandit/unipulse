@@ -11,6 +11,11 @@ from app.routers import messages
 from app.routers import likes
 import socketio
 
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.database import get_db
+
 load_dotenv()
 
 app = FastAPI(title="Unipulse API")
@@ -36,6 +41,11 @@ app.include_router(likes.router)
 @app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "Unipulse API is running"}
+
+@app.get("/health")
+async def health_check(db: Session = Depends(get_db)):
+    db.execute(text("SELECT 1"))
+    return {"status": "ok"}
 
 # Mount Socket.io
 socket_app = socketio.ASGIApp(sio, app)
