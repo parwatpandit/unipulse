@@ -372,7 +372,7 @@ gitGraph
 - Production deployment with custom domain and SSL
 
 **Up next 🔜**
-- [ ] Fix notification type mismatch (`friend_accepted` vs `friend_request_accepted`) in `Notifications.tsx`
+- [x] Fix notification type mismatch (`friend_accepted` vs `friend_request_accepted`) in `Notifications.tsx`
 - [ ] Show live status dot on profile pictures
 - [ ] Client-side image compression before upload
 - [ ] Reduce `unread-count` polling frequency
@@ -383,7 +383,7 @@ gitGraph
 - [ ] Terms of Service, Privacy Policy and Community Guidelines
 - [ ] Automated email verification (needs Ulster IT to allow `unipulse.xyz`)
 - [ ] Cloudflare for DDoS protection
-- [ ] Docker setup once deployment is stable
+- [x] Docker setup once deployment is stable
 
 ---
 
